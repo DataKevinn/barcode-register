@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complementar Dados</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #1e1e2e; 
+      color: #fff; 
+      padding: 20px; 
+    }
+    #container { 
+      max-width: 500px; 
+      margin: auto; 
+      background: #2a2a3a; 
+      padding: 20px; 
+      border-radius: 10px; 
+    }
+    input, button { 
+      width: 100%; 
+      margin: 10px 0; 
+      padding: 10px; 
+      font-size: 16px; 
+    }
+    input { 
+      background: #444; 
+      color: #fff; 
+    }
+    button { 
+      background: #4CAF50; 
+      border: none; 
+      cursor: pointer; 
+    }
+    button:hover { 
+      background: #45a049; 
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>Complementar Dados</h1>
+    <button id="nextProductBtn" onclick="buscarUltimoRegistro()">Próximo Produto</button>
+    <p><strong>Código:</strong> <span id="barcodeDisplay"></span></p>
+    <input type="text" id="nome" placeholder="Nome do Produto">
+    <input type="number" id="quantidade" placeholder="Quantidade">
+    <input type="number" step="0.01" id="valor" placeholder="Valor">
+    <button onclick="atualizarRegistro()">Salvar Dados</button>
+  </div>
+
+  <script>
+    let registroAtual = null;
+
+    function buscarUltimoRegistro() {
+      fetch('ultimo_registro.php')
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.id) {
+          registroAtual = data;
+          document.getElementById('barcodeDisplay').innerText = data.barcode;
+          // Se já houver dados preenchidos, preenche os campos (opcional)
+          document.getElementById('nome').value = data.nome || '';
+          document.getElementById('quantidade').value = data.quantidade || '';
+          document.getElementById('valor').value = data.valor || '';
+        } else {
+          alert("Nenhum registro pendente encontrado!");
+          // Limpa os campos se não houver registro
+          registroAtual = null;
+          document.getElementById('barcodeDisplay').innerText = '';
+          document.getElementById('nome').value = '';
+          document.getElementById('quantidade').value = '';
+          document.getElementById('valor').value = '';
+        }
+      })
+      .catch(err => console.error("Erro ao buscar último registro:", err));
+    }
+
+    function atualizarRegistro() {
+      if (!registroAtual || !registroAtual.id) {
+        alert("Nenhum registro para atualizar!");
+        return;
+      }
+      const nome = document.getElementById('nome').value.trim();
+      const quantidade = document.getElementById('quantidade').value.trim();
+      const valor = document.getElementById('valor').value.trim();
+      
+      if (!nome || !quantidade || !valor) {
+        alert("Preencha todos os campos!");
+        return;
+      }
+      
+      const params = new URLSearchParams();
+      params.append('id', registroAtual.id);
+      params.append('nome', nome);
+      params.append('quantidade', quantidade);
+      params.append('valor', valor);
+
+      fetch('atualizar_registro.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      })
+      .then(response => response.text())
+      .then(data => {
+        alert(data);
+        registroAtual = null;
+        document.getElementById('barcodeDisplay').innerText = '';
+        document.getElementById('nome').value = '';
+        document.getElementById('quantidade').value = '';
+        document.getElementById('valor').value = '';
+      })
+      .catch(err => console.error("Erro ao atualizar registro:", err));
+    }
+  </script>
+</body>
+</html>
